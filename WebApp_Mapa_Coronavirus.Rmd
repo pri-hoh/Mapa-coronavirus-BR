@@ -1,0 +1,196 @@
+---
+title: "Mapa coronavirus com dados do Ministério da Saúde - por UF"
+author: "Priscila Hohberg"
+# date: '`r format(Sys.time(), "%d.%m.%Y")`'
+output:
+  flexdashboard::flex_dashboard:
+    theme: cosmo
+    navbar:
+      - { icon: "fa-linkedin", href: "https://www.linkedin.com/in/priscila-hohberg-5a61b097/", align: right }
+    social: menu
+    orientation: rows
+    vertical_layout: fill
+---
+
+<!-- “default”, “cerulean”, “journal”, “flatly”, “darkly”, “readable”, “spacelab”, “united”, “cosmo”, “lumen”, “paper”, “sandstone”, “simplex”, “yeti” -->
+
+```{r setup, include=FALSE}
+# Pacotes:
+  library(flexdashboard)
+  library(tidyverse)
+  library(tidytext)
+  library(leaflet)
+  library(scales)
+  library(htmltools)
+  library(plotly)
+  # library(fontawesome)
+  library(readxl)
+
+
+# Sourcers:
+  # source("05-covid_versaoPri.R")
+  # source("Código R - Mapa coronavirus - v2.R")
+  source("Código R - Mapa coronavirus - v2_2.R")
+
+
+```
+
+
+
+Mapa {data-icon="virus"}
+=====================================
+
+Row 
+-----------------------------------------------------------------------
+
+### Casos confirmados
+
+```{r}
+## resultados exercicio 01
+valueBox(format(tab_ms_sum$qtd_confirmado,
+                big.mark = ".",
+                decimal.mark = ","),
+         color="#FF4C4C",
+         icon = "fa-users")
+```
+
+### Óbitos confirmados
+
+```{r}
+valueBox(format(tab_ms_sum$qtd_obito,
+                big.mark = ".",
+                decimal.mark = ","), 
+         color = "#8C8C8C", 
+         icon = "fa-users")
+
+```
+
+### Letalidade
+
+```{r}
+valueBox(scales::percent(tab_ms_sum$qtd_obito/tab_ms_sum$qtd_confirmado,
+                         0.1,
+                        big.mark = ".",
+                        decimal.mark = ","), 
+         color = "#A346A3", 
+         icon = "fa-users")
+
+```
+
+------------------------------------
+
+Row 
+-----------------------------------------------------------------------
+
+
+### Atualizado em `r paste(format(Sys.time(),"%d.%m.%Y"),"às",format(Sys.time(),"%X"))`
+
+
+```{r,echo=FALSE}
+
+# qtd confirmados + qtd óbitos + letalidade - g'rafico com menu
+  tab_ms %>%
+    mutate(latitude=as.numeric(latitude),
+           longitude=as.numeric(longitude)) %>%
+    leaflet() %>%
+    addTiles() %>%
+    # addLegend(position = "bottomright",
+    #           title = titulo,
+    #           opacity = 1,
+    #           colors = "red") %>%
+    addCircles(radius= ~qtd_confirmado*0.3,
+               color="red",
+               label= labels_confirmado,
+               group = 'Casos confirmados') %>%
+    addCircles(radius= ~qtd_obito*6,
+               color="black",
+               label= labels_obitos,
+               group = 'Óbitos confirmados') %>%
+    addCircles(radius= ~letalidade_por_caso_conf*2500000,
+               color="purple",
+               label= labels_letalidade,
+               group = 'Letalidade (%)') %>%
+    addLayersControl(
+      baseGroups = c('Casos confirmados',
+                     'Óbitos confirmados',
+                     'Letalidade (%)'),
+      # baseGroups
+      # overlayGroups = c("Quakes", "Outline"),
+      options = layersControlOptions(collapsed = FALSE)) 
+
+
+
+```
+
+<!-- Column {data-width=750} -->
+<!-- ----------------------------------------------------------------------- -->
+Gráficos {data-icon="data-chart"}
+=====================================
+
+### Atualizado em `r paste(format(Sys.time(),"%d.%m.%Y"),"às",format(Sys.time(),"%X"))`
+
+```{r}
+
+plot_ly(tab_ms, x = ~nome) %>%
+    add_bars(x = ~nome,
+             y = ~qtd_confirmado, name="Casos confirmados",
+             marker = list(color="red"),
+             text = paste0(tab_ms$nome,": ",
+                           format(tab_ms$qtd_confirmado,
+                                  big.mark=".",
+                                  decimal.mark=","),
+                           " casos confirmados"),
+             hoverinfo = "text") %>%
+    add_bars(x = ~nome,
+             y = ~qtd_obito, visible=F, name="Óbitos confirmados",
+             marker = list(color="black"),
+             text = paste0(tab_ms$nome,": ",
+                           format(tab_ms$qtd_obito,
+                                  big.mark=".",
+                                  decimal.mark=","),
+                           " óbitos confirmados"),
+             hoverinfo = "text") %>%
+    add_bars(x = ~nome,
+             y = ~letalidade_por_caso_conf*100, visible=F, name="Letalidade (%)",
+             marker = list(color="purple"),
+             text = paste0(tab_ms$nome,": ",
+                           format(round(tab_ms$letalidade_por_caso_conf*100,1),
+                                  big.mark=".",
+                                  decimal.mark=","),
+                           "%"),
+             hoverinfo = "text") %>%
+    layout(xaxis = list(showline = F, 
+                        showticklabels = F, 
+                        fixedrange = T, 
+                        title = "Estados"),
+           yaxis = list(fixedrange = T),
+           showlegend=F,
+           updatemenus = list(
+             list(
+               x = "Pará",
+               buttons = list(
+                 list(method = "update",
+                      args = list(list(visible = list(TRUE, FALSE,FALSE)),
+                                  list(yaxis = list(title = "# casos confirmados"))),
+                      label = "Casos confirmados"),
+                 
+                 list(method = "update",
+                      args = list(list(visible = list(F, T,F)),
+                                  list(yaxis = list(title = "# óbitos"))),
+                      label = "Óbitos confirmados"),
+                 
+                 list(method = "update",
+                      args = list(list(visible = list(F, F,T)),
+                                  list(yaxis = list(title = "Letalidade (%)"))),
+                      label = "Letalidade (%)")))
+           )
+    )
+
+```
+
+
+
+
+
+
+

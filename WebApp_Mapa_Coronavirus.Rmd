@@ -5,8 +5,8 @@ author: "Priscila Hohberg"
 output:
   flexdashboard::flex_dashboard:
     theme: cosmo
-    navbar:
-      - { icon: "fa-linkedin", href: "https://www.linkedin.com/in/priscila-hohberg-5a61b097/", align: right }
+    # navbar:
+    #   - { icon: "fa-linkedin", href: "https://www.linkedin.com/in/priscila-hohberg-5a61b097/", align: right }
     social: menu
     orientation: rows
     vertical_layout: fill

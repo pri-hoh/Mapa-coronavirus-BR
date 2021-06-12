@@ -25,6 +25,7 @@ output:
   library(plotly)
   # library(fontawesome)
   library(readxl)
+  library(dplyr)
 
 
 # Sourcers:
